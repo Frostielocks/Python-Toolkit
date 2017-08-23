@@ -23,7 +23,6 @@ def handler(path, old, new):
 
     file = open(path, "w")
     contents = "".join(contents)
-    print(contents)
     file.write(contents)
     file.close()
 
@@ -41,18 +40,27 @@ def extract_from_file(path):
     return [files, contents[0].rstrip(), contents[1].rstrip()]
 
 
-def main():
-    result = sys.argv
-    del result[0]
+def print_exit(files, old, new):
+    print("Replaced all instances of %s to %s in file(s):" % (old, new))
+    for path in files:
+        print(path)
 
-    if len(result) == 3:
-        handler(result[0], result[1], result[2])
-    elif len(result) == 1:
-        result = extract_from_file(result[0])
-        for path in result[0]:
-            handler(path, result[1], result[2])
+
+def main():
+    del sys.argv[0]
+
+    if len(sys.argv) == 1:
+        result = extract_from_file(sys.argv[0])
+    elif len(sys.argv) == 3:
+        result = sys.argv
+        result[0] = [result[0]]
     else:
-        print("Invalid amount of command line arguments!")
+        print("Invalid # of arguments!")
+        sys.exit()
+
+    for path in result[0]:
+        handler(path, result[1], result[2])
+    print_exit(result[0], result[1], result[2])
 
 
 main()
