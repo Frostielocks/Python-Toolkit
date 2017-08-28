@@ -6,15 +6,7 @@ import time
 def get_substring_between(string, start_target, end_target):
     start = string.rfind(start_target) + len(start_target)
     string = string[start: len(string)]
-    return string[0: get_end_index(string, end_target)]
-
-
-def get_end_index(string, end_target):
-    count = 0
-    for c in string:
-        if c == end_target:
-            return count
-        count += 1
+    return string[0: string.find(end_target)]
 
 
 def write_to_file(filepath, ip_addres):
@@ -23,11 +15,13 @@ def write_to_file(filepath, ip_addres):
 
 
 def main():
+    del sys.argv[0]
+
     html = urllib.request.urlopen('http://ip4.me//').read()
-    ip_adress = get_substring_between(html.decode("utf-8"), "<font face=\"Arial, Monospace\" size=+3>", "<")
+    ip_adress = get_substring_between(html.decode("utf-8"), "<font face=\"Arial, Monospace\" size=+3>", "</font>")
     print("Public IP adress is: %s" % ip_adress)
-    if (len(sys.argv) == 1 and sys.argv[0] == "-log"):
-        write_to_file("ip_log.txt", ip_adress)
+    if len(sys.argv) == 1:
+        write_to_file(sys.argv[0], ip_adress)
 
 
 main()
