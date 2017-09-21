@@ -3,6 +3,11 @@ import sys
 import eyed3
 
 
+# Program that automates id3 tag writing to .mp3 files.
+# The programs assumes that all the .mp3 files are initialized with their publishing years.
+# ssy.argv[0] contains the wikipedia link to the album of the files.
+# sys.argv[1] contains the path to the rule-contents (see documentation assign_contents).
+
 # Get all substrings of a string that are located between two targets (start and end).
 def get_all_substrings_between(string, start_target, end_target):
     result = list()
@@ -124,7 +129,7 @@ def assign_files(output, contents):
             print(audiofile.tag.publisher)
 
 
-# Returns contents: [Artist, Album, Genre, Publisher, Debug]
+# Returns contents from file path: [artist, album, genre, publisher, debug]
 def assign_contents(path):
     file = open(path, "r")
     contents = file.readlines()
@@ -134,7 +139,6 @@ def assign_contents(path):
 
     for i in range(len(contents)):
         contents[i] = contents[i].rstrip()
-
     return contents
 
 
