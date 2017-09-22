@@ -7,8 +7,9 @@ import eyed3
 # The programs assumes that all the .mp3 files are initialized with their publishing years.
 # sy.argv[0] contains the wikipedia link to the album of the songs in the .mp3 files.
 # sys.argv[1] may contain the path to the rules for the general tags (see documentation assign_gen_tags).
+# Author: Mathijs Hubrechtsen
 
-# -------------------------------------------------- TODO: Substring Methods
+# -------------------------------------------------- Part: Substring Methods
 
 # Get all the substrings in a given string located between the first case of a given start_target (exclusive)
 # and end_target (exclusive). For example if this method is called on the following string:
@@ -57,7 +58,7 @@ def get_all_substrings_between(string, start_target, end_target):
         start = string.find(start_target)
     return result
 
-# -------------------------------------------------- TODO: Extraction/Substitution Methods
+# -------------------------------------------------- Part: Extraction/Substitution Methods
 
 
 # Extract all cases of a given target from a given string.
@@ -127,6 +128,7 @@ def substitute(string, og_target, new_target):
 # Extract all the garbage from a given filtered html output made in the main method of this program.
 # NOTE: See Implementation.
 # FIXME: Update is necessary if wikipedia switches it's syntax.
+# FIXME: Add more extract/substitute tasks.
 def extract_garbage(output):
     extract_tasks = ["</td>", "<td style=\"vertical-align:top\">", "\"", "\n",
                      "<span style=font-size:85%>", "</span>", "</span"]
@@ -151,7 +153,7 @@ def extract_garbage(output):
         output[i] = string
     return output
 
-# -------------------------------------------------- TODO: General Tag Methods
+# -------------------------------------------------- Part: General Tag Methods
 
 
 # If possible, converts a given genre to the normalized version of this genre.
@@ -183,7 +185,7 @@ def assign_gen_tags(path):
     file.close()
 
     # The file needs to use the correct syntax.
-    if len(gen_tags) != 5:
+    if len(gen_tags) != 6:
         raise SyntaxError
 
     # Get rid of all trailing newline characters.
@@ -192,10 +194,21 @@ def assign_gen_tags(path):
     return gen_tags
 
 
-# Infer the general tags by using the html document of the given wikipedia link specified by the user.
-# FIXME: Publisher
+# Helper method of infer_gen_tags, this method will return the publisher of the album
+# at the given wikipedia link specified by the user.
+def infer_gen_tags_publisher(html):
+    start_target = "title=\"Record label\">Label</a></th>\n<td class=\"hlist\">"
+    string = get_substrings_between(html, start_target, "</td>")
+    try:
+        return extract_text_from_link_tag(get_substrings_between(string, "<li>", "</li>"))
+    except LookupError:
+        return extract_text_from_link_tag(string)
+
+
+# Infer the general (for the entire album) tags by using the html document
+# of the given wikipedia link specified by the user.
 def infer_gen_tags(html):
-    gen_tags = ["artist", "album", "genre", "publisher", "False"]
+    gen_tags = ["artist", "album", "genre", "publisher", "year", "False"]
 
     # Get the album artist.
     string = get_substrings_between(html, " by <span class=\"contributor\">", "</span>")
@@ -215,16 +228,17 @@ def infer_gen_tags(html):
         gen_tags[2] = ""
 
     # Get the album publisher
-    start_target = "title=\"Record label\">Label</a></th>\n<td class=\"hlist\">"
-    string = get_substrings_between(html, start_target, "</td>")
-    gen_tags[3] = extract_text_from_link_tag(string)
+    gen_tags[3] = lookup_normalized_publisher(infer_gen_tags_publisher(html))
 
-    if dev_debug:
-        print(gen_tags)
-
+    # Get the album year
+    start_target = "<td style=\"width: 33%; text-align: center; vertical-align: top; padding: .2em .1em\">"
+    start = html.find(start_target)
+    string = html[start: len(html)]
+    gen_tags[4] = get_substrings_between(string, "<br />\n", ")")
+    gen_tags[4] = extract(gen_tags[4], "(")
     return gen_tags
 
-# -------------------------------------------------- TODO: Specific Tag Methods
+# -------------------------------------------------- Part: Specific Tag Methods
 
 
 # Helper method of generate_spec_tags, this method will normalize the featuring artist part of a given string.
@@ -268,7 +282,7 @@ def generate_spec_tags(output, gen_tags):
         spec_tags.append(temp)
     return spec_tags
 
-# -------------------------------------------------- TODO: Assign id3 Tags Methods.
+# -------------------------------------------------- Part: Assign id3 Tags Methods.
 
 
 # Assign the id3 tags of the .mp3 files of songs in the given album located in this program's directory
@@ -278,7 +292,8 @@ def assign_id3_tags(spec_tags, gen_tags):
     album = gen_tags[1]
     genre = gen_tags[2]
     publisher = gen_tags[3]
-    debug = gen_tags[4]
+    year = int(gen_tags[4])
+    debug = gen_tags[5]
 
     for spec_tag in spec_tags:
         title = spec_tag[0]
@@ -298,6 +313,13 @@ def assign_id3_tags(spec_tags, gen_tags):
         audio_file.tag.track_num = int(number)
         audio_file.tag.genre = genre
         audio_file.tag.publisher = publisher
+
+        audio_file.tag.release_date = eyed3.core.Date(year)
+        audio_file.tag.orig_release_date = eyed3.core.Date(year)
+        audio_file.tag.recording_date = eyed3.core.Date(year)
+        # audio_file.tag.encoding_date = eyed3.core.Date(2015)
+        # audio_file.tag.tagging_date = eyed3.core.Date(2015)
+
         audio_file.tag.save()
 
         # Only print confirmation if the user specified debugging.
@@ -310,7 +332,7 @@ def assign_id3_tags(spec_tags, gen_tags):
             print(audio_file.tag.genre)
             print(audio_file.tag.publisher)
 
-# -------------------------------------------------- TODO: Main Method and global variables.
+# -------------------------------------------------- Part: Main Method and global variables.
 
 
 # Main method.
@@ -318,9 +340,9 @@ def assign_id3_tags(spec_tags, gen_tags):
 def main():
     del[sys.argv[0]]
 
-    if dev_debug:
-        sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
-        sys.argv.append("rules.txt")
+    if dev_mode:
+        sys.argv.append("https://en.wikipedia.org/wiki/Young_Sinatra:_Welcome_to_Forever")
+        # sys.argv.append("rules.txt")
 
     # Get and decode the html file located at the given wikipedia page
     html = urllib.request.urlopen(sys.argv[0]).read()
@@ -346,12 +368,12 @@ def main():
     # Transform and Assign the raw output.
     output = extract_garbage(output)
     output = generate_spec_tags(output, gen_tags)
-    if dev_debug:
+    if dev_mode:
         print(gen_tags)
         for item in output:
             print(item)
     assign_id3_tags(output, gen_tags)
 
 
-dev_debug = False
+dev_mode = False
 main()
