@@ -5,21 +5,45 @@ import eyed3
 
 # Program that automates id3 tag writing to .mp3 files.
 # The programs assumes that all the .mp3 files are initialized with their publishing years.
-# ssy.argv[0] contains the wikipedia link to the album of the files.
-# sys.argv[1] contains the path to the rule-contents (see documentation assign_contents).
+# sy.argv[0] contains the wikipedia link to the album of the songs in the .mp3 files.
+# sys.argv[1] may contain the path to the rules for the general tags (see documentation assign_gen_tags).
 
-# Get all substrings of a string that are located between two targets (start and end).
+# -------------------------------------------------- TODO: Substring Methods
+
+# Get all the substrings in a given string located between the first case of a given start_target (exclusive)
+# and end_target (exclusive). For example if this method is called on the following string:
+#           string = text + start_target + substring + end_target + text
+# This method will return substring.
+def get_substrings_between(string, start_target, end_target):
+    start = string.find(start_target)
+    new_string = string[start + len(start_target): len(string)]
+    end = new_string.find(end_target)
+    return string[start + len(start_target): start + len(start_target) + end]
+
+
+# Get all the substrings in a given string located between all the cases of a given start_target (exclusive)
+# and end_target (exclusive). For example if this method is called on the following string:
+#           string = text + start_target + substring_1 + end_target + text +
+#                    start_target + substring_2 + end_target + text
+# This method will return substring_1 and substring_2.
+#
+# NOTE: This specific implementation skips the first end_target after finding a start_target.
+# For example if this implementation is called on the following string:
+#           string = text + start_target + substring_1 + end_target + substring_2 + end_target + text
+# This implementation will return substring_1 + end_target + substring_2
+# This is done because of wikipedia's html layout.
 def get_all_substrings_between(string, start_target, end_target):
     result = list()
+    # As long as the start_target can be found do...
     start = string.find(start_target)
     while start != -1:
+        # Move the string up.
         string = string[start + len(start_target): len(string)]
-        # former_string = former_string[0, start] + former_string[start, start + len(start_target)] + string
 
-        # Correct for the second usage of end_target, this is done bcs of wikipedia's html layout.
-        # Find the first usage:
+        # Correct for the second case of end_target, this is done bcs of wikipedia's html layout.
+        # Find the first case:
         end1 = string.find(end_target)
-        # Find the second usage:
+        # Find the second case:
         end2 = string[end1 + len(end_target): len(string)].find(end_target) + len(end_target)
         end = end1 + end2
 
@@ -29,9 +53,15 @@ def get_all_substrings_between(string, start_target, end_target):
         start = string.find(start_target)
     return result
 
+# -------------------------------------------------- TODO: Extraction/Substitution Methods
 
-# Extract all the targets from a string.
+
+# Extract all cases of a given target from a given string.
+# For example if this method is called on the following string:
+#           string = substring_1 + target + substring_2 + target
+# This method will return substring_1 + substring_2
 def extract(string, target):
+    # As long as the target can be found do...
     start = string.find(target)
     while start != -1:
         start_string = string[0: start]
@@ -41,46 +71,45 @@ def extract(string, target):
     return string
 
 
-# Extracts everything between the first usage of start_target to end_target (including targets).
-def extract_first_usage_between(string, start_target, end_target):
-    start = string.find(start_target)
-    if start == -1:
+# Extract everything of the first html link tag from a given string.(<a href="...">text</a>) except it's text.
+# For example if this method is called on the following string:
+#           string = substring_1 + <a href="...">text</a> + substring_2 + <a href="...">text</a>
+# This method will return substring_1 + text + substring_2 + <a href="...">text</a>
+def extract_text_from_link_tag(string):
+    start_target = "<a href=\""
+    og_start = string.find(start_target)
+    if og_start == -1:
         return string
-    start_string = string[0: start]
-    end = string.find(end_target) + len(end_target)
-    end_string = string[end: len(string)]
-    return start_string + end_string
+
+    user = string[og_start: len(string)]
+    start_target = "\">"
+    start = og_start + user.find(start_target)
+    end_target = "</a>"
+    end = og_start + user.find(end_target)
+
+    return string[0: og_start] + string[start + len(start_target): end] + string[end + len(end_target): len(string)]
 
 
-# Extract song title name from a link tag.
-def extract_title_from_link_tag(string, contents):
-    start_target = "<a href="
-    start = string.find(start_target)
-    if start == -1:
-        return string
-    start_string = string[0: start]
-
-    start_target = "title="
-    start = string.find(start_target)
-    end_target = " (" + contents[0] + " song)"
-    end = string.find(end_target)
-
-    flag = False
-    if end == -1:
-        flag = True
-        end_target = ">"
-        end = string.find(end_target)
-    end_string = string[start + len(start_target): end]
-
-    if flag:
-        true_end_target = "</a>"
-        true_end = string.find(true_end_target)
-        end_string += string[true_end + len(true_end_target): len(string)]
-
-    return start_string + end_string
+# def extract_title_from_link_tag(string):
+#     start_target = "<a href=\""
+#     og_start = string.find(start_target)
+#     if og_start == -1:
+#         return string
+#
+#     user = string[og_start : len(string)]
+#     start_target = "title=\""
+#     start = og_start + user.find(start_target)
+#     end_target = "\""
+#     end = og_start + user.find(end_target)
+#
+#     og_end = user.find("</a>") + len("</a>")
+#     return string[0: og_start] + string[start: end] + string[og_end: len(string)]
 
 
-# Substitute all the original targets with the new targets.
+# Substitute all the cases of a given original target with given new targets.
+# For example if this method is called on the following string:
+#           string = text + og_target + text + og_target + text
+# This method will return text + new_target + text + new_target + text
 def substitute(string, og_target, new_target):
     start = string.find(og_target)
     while start != -1:
@@ -91,126 +120,228 @@ def substitute(string, og_target, new_target):
     return string
 
 
-# Extract all the garbage from a given output.
-def extract_garbage(output, contents):
+# Extract all the garbage from a given filtered html output made in the main method of this program.
+# NOTE: See Implementation.
+# FIXME: Update is necessary if wikipedia switches it's syntax.
+def extract_garbage(output):
     extract_tasks = ["</td>", "<td style=\"vertical-align:top\">", "\"", "\n",
                      "<span style=font-size:85%>", "</span>", "</span"]
     substitute_tasks = [[" / ", " "], [" : ", " "], ["&amp;", "&"]]
     for i in range(len(output)):
         string = output[i]
+        # Before extracting all cases of: ", all the link tags are handled, this ordering is necessary
+        # due to the implementation of extract_text_from_link_tag.
+        old_string = ""
+        while old_string != string:
+            old_string = string
+            string = extract_text_from_link_tag(string)
+
+        # Extract all the extract tasks
         for j in range(len(extract_tasks)):
             string = extract(string, extract_tasks[j])
+        # Substitute all the extract tasks
         for j in range(len(substitute_tasks)):
             string = substitute(string, substitute_tasks[j][0], substitute_tasks[j][1])
-
-        # string = extract_first_usage_between(string, " <span", "</span>")
-        string = extract_title_from_link_tag(string, contents)
+        
+        # Update output
         output[i] = string
     return output
 
+# -------------------------------------------------- TODO: General Tag Methods
 
-def extract_artist(string):
-    string = extract(string, " (featuring ")
+
+# If possible, converts a given genre to the normalized version of this genre.
+# For example if the genre is Conscious hip hop, this method will return Hip-Hop.
+# FIXME: Add more normalizations.
+def lookup_normalized_genre(genre):
+    if genre == "Hip hop":
+        return "Hip-Hop"
+    elif genre == "Conscious hip hop":
+        return "Hip-Hop"
+    else:
+        return genre
+
+
+# If possible, converts a given publisher to the normalized version of this publisher.
+# For example if the publisher is Visionary Music Group, this method will return Visionary.
+# FIXME: Add more normalizations.
+def lookup_normalized_publisher(publisher):
+    if publisher == "Visionary Music Group":
+        return "Visionary"
+    else:
+        return publisher
+
+
+# Assign the general tags by using the values found in the file located at the given path.
+def assign_gen_tags(path):
+    file = open(path, "r")
+    gen_tags = file.readlines()
+    file.close()
+
+    # The file needs to use the correct syntax.
+    if len(gen_tags) != 5:
+        raise SyntaxError
+
+    # Get rid of all trailing newline characters.
+    for i in range(len(gen_tags)):
+        gen_tags[i] = gen_tags[i].rstrip()
+    return gen_tags
+
+
+# Infer the general tags by using the html document of the given wikipedia link specified by the user.
+def infer_gen_tags(html):
+    gen_tags = ["artist", "album", "genre", "publisher", "False"]
+
+    # Get the album artist.
+    string = get_substrings_between(html, " by <span class=\"contributor\">", "</span>")
+    gen_tags[0] = extract_text_from_link_tag(string)
+
+    # Get the album name.
+    gen_tags[1] = get_substrings_between(html, "<p><i><b>", "</b></i>")
+
+    # Get the album genre.
+    start_target = "<th scope=\"row\"><a href=\"/wiki/Music_genre\" title=\"Music genre\">Genre</a></th>\n" + \
+                   "<td class=\"category hlist\">"
+    string = get_substrings_between(html, start_target, "</td>")
+    string = extract_text_from_link_tag(string)
+    gen_tags[2] = lookup_normalized_genre(string)
+
+    # Get the album publisher
+    start_target = "title=\"Record label\">Label</a></th>\n<td class=\"hlist\">"
+    string = get_substrings_between(html, start_target, "</td>")
+    gen_tags[3] = string
+
+    if dev_debug:
+        print(gen_tags)
+
+    return gen_tags
+
+# -------------------------------------------------- TODO: Specific Tag Methods
+
+
+# Helper method of generate_spec_tags, this method will normalize the featuring artist part of a given string.
+# For example if this method is called on the following string:
+#           string = " (featuring Black Thought, Chuck D, Big Lenbo and No I.D.)"
+# This method will return Black Thought;Chuck D;Big Lenbo;No I.D.
+def generate_spec_tags_features(string):
+    target = " (featuring "
+    if string.find(target) == -1:
+        return string
+        
+    string = extract(string, target)
     string = extract(string, ")")
     string = substitute(string, " and ", ";")
+    string = substitute(string, ", ", ";")
     return string
 
 
-# Generate the [song_name, song_number] pairs.
-def generate_pairs(output, contents):
-    result = list()
+# Generates the data for the specific tags of individual songs (title, track_num, artists).
+# All these tags are specific for each individual song of an album because all the other tags (non-specific)
+# apply to the entire album, specific tags are different for each song.
+def generate_spec_tags(output, gen_tags):
+    spec_tags = list()
     for i in range(len(output)):
-        temp = ["Song","Number", "Artists"]
+        temp = ["title", "track_num", "artists"]
         string = output[i]
         pivot1 = string.find(".")
         temp[1] = string[0: pivot1]
 
         pivot2 = string.find(" (featuring ")
+        # If there are not featured artists:
         if pivot2 == -1:
             temp[0] = string[pivot1 + 1: len(string)]
-            temp[2] = contents[0]
+            temp[2] = gen_tags[0]
+        # Else there are featured artists:
         else:
             temp[0] = string[pivot1 + 1: pivot2]
             temp[2] = string[pivot2: len(string)]
-            temp[2] = "Logic;" + extract_artist(temp[2])
+            temp[2] = gen_tags[0] + ";" + generate_spec_tags_features(temp[2])
 
-        result.append(temp)
-    return result
+        spec_tags.append(temp)
+    return spec_tags
+
+# -------------------------------------------------- TODO: Assign id3 Tags Methods.
 
 
-# Assign id3 tags to files.
-def assign_files(output, contents):
-    artist = contents[0]
-    album = contents[1]
-    genre = contents[2]
-    publisher = contents[3]
-    debug = contents[4]
+# Assign the id3 tags of the .mp3 files of songs in the given album located in this program's directory
+# to the found specific and general tag values.
+def assign_id3_tags(spec_tags, gen_tags):
+    artist = gen_tags[0]
+    album = gen_tags[1]
+    genre = gen_tags[2]
+    publisher = gen_tags[3]
+    debug = gen_tags[4]
 
-    for item in output:
-        title = item[0]
-        number = item[1]
-        all_artists = item[2]
+    for spec_tag in spec_tags:
+        title = spec_tag[0]
+        number = spec_tag[1]
+        all_artists = spec_tag[2]
+        # If the file exists, assign id3 tags, else continue
         try:
-            audiofile = eyed3.load(artist + " - " + title + ".mp3")
+            audio_file = eyed3.load(artist + " - " + title + ".mp3")
         except IOError:
             continue
 
-        audiofile.tag.title = title
-        audiofile.tag.artist = all_artists
-        audiofile.tag.album_artist = artist
-        audiofile.tag.album = album
-        audiofile.tag.track_num = int(number)
-        audiofile.tag.genre = genre
-        audiofile.tag.publisher = publisher
-        audiofile.tag.save()
+        audio_file.tag.title = title
+        audio_file.tag.artist = all_artists
+        audio_file.tag.album_artist = artist
+        audio_file.tag.album = album
+        audio_file.tag.track_num = int(number)
+        audio_file.tag.genre = genre
+        audio_file.tag.publisher = publisher
+        audio_file.tag.save()
 
+        # Only print confirmation if the user specified debugging.
         if debug == "True":
-            print(audiofile.tag.title)
-            print(audiofile.tag.artist)
-            print(audiofile.tag.album_artist)
-            print(audiofile.tag.album)
-            print(audiofile.tag.track_num)
-            print(audiofile.tag.genre)
-            print(audiofile.tag.publisher)
+            print(audio_file.tag.title)
+            print(audio_file.tag.artist)
+            print(audio_file.tag.album_artist)
+            print(audio_file.tag.album)
+            print(audio_file.tag.track_num)
+            print(audio_file.tag.genre)
+            print(audio_file.tag.publisher)
+
+# -------------------------------------------------- TODO: Main Method and global variables.
 
 
-# Returns contents from file path: [artist, album, genre, publisher, debug]
-def assign_contents(path):
-    file = open(path, "r")
-    contents = file.readlines()
-    file.close()
-    if len(contents) < 5:
-        raise SyntaxError
-
-    for i in range(len(contents)):
-        contents[i] = contents[i].rstrip()
-    return contents
-
-
+# Main method.
+# FIXME: Update is necessary if wikipedia switches it's syntax.
 def main():
     del[sys.argv[0]]
-    if dev_debug:
-        sys.argv.append("https://en.wikipedia.org/wiki/Young_Sinatra_(mixtape)")
-        sys.argv.append("rules.txt")
-    html = urllib.request.urlopen(sys.argv[0]).read()
-    contents = assign_contents(sys.argv[1])
 
+    if dev_debug:
+        sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
+        sys.argv.append("rules.txt")
+
+    # Get and decode the html file located at the given wikipedia page
+    html = urllib.request.urlopen(sys.argv[0]).read()
+    html = html.decode("utf-8")
+
+    # Infer or Assign the general tags depending upon the amount of command line arguments.
+    if len(sys.argv) < 2:
+        gen_tags = infer_gen_tags(html)
+    else:
+        gen_tags = assign_gen_tags(sys.argv[1])
+
+    # Construct the search targets.
     color1 = "<tr style=\"background-color:#fff\">\n"
     color2 = "<tr style=\"background-color:#f7f7f7\">\n"
-    garbage = "<td style=\"padding-right:10px;text-align:right;vertical-align:top\">"
+    start_garbage = "<td style=\"padding-right:10px;text-align:right;vertical-align:top\">"
     end_target = "<td style=\"vertical-align:top\">"
 
-    list1 = get_all_substrings_between(html.decode("utf-8"), color1 + garbage, end_target)
-    list2 = get_all_substrings_between(html.decode("utf-8"), color2 + garbage, end_target)
+    # Combine the raw outputs of the two colors.
+    list1 = get_all_substrings_between(html, color1 + start_garbage, end_target)
+    list2 = get_all_substrings_between(html, color2 + start_garbage, end_target)
     output = list1 + list2
 
-    output = extract_garbage(output, contents)
-    output = generate_pairs(output, contents)
+    # Transform and Assign the raw output.
+    output = extract_garbage(output)
+    output = generate_spec_tags(output, gen_tags)
     if dev_debug:
         for item in output:
             print(item)
-    assign_files(output, contents)
+    assign_id3_tags(output, gen_tags)
 
 
-dev_debug = False
+dev_debug = True
 main()
