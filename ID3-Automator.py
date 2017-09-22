@@ -16,8 +16,12 @@ import eyed3
 # This method will return substring.
 def get_substrings_between(string, start_target, end_target):
     start = string.find(start_target)
+    if start == -1:
+        raise LookupError
     new_string = string[start + len(start_target): len(string)]
     end = new_string.find(end_target)
+    if end == -1:
+        raise LookupError
     return string[start + len(start_target): start + len(start_target) + end]
 
 
@@ -189,6 +193,7 @@ def assign_gen_tags(path):
 
 
 # Infer the general tags by using the html document of the given wikipedia link specified by the user.
+# FIXME: Publisher
 def infer_gen_tags(html):
     gen_tags = ["artist", "album", "genre", "publisher", "False"]
 
@@ -202,14 +207,17 @@ def infer_gen_tags(html):
     # Get the album genre.
     start_target = "<th scope=\"row\"><a href=\"/wiki/Music_genre\" title=\"Music genre\">Genre</a></th>\n" + \
                    "<td class=\"category hlist\">"
-    string = get_substrings_between(html, start_target, "</td>")
-    string = extract_text_from_link_tag(string)
-    gen_tags[2] = lookup_normalized_genre(string)
+    try:
+        string = get_substrings_between(html, start_target, "</td>")
+        string = extract_text_from_link_tag(string)
+        gen_tags[2] = lookup_normalized_genre(string)
+    except LookupError:
+        gen_tags[2] = ""
 
     # Get the album publisher
     start_target = "title=\"Record label\">Label</a></th>\n<td class=\"hlist\">"
     string = get_substrings_between(html, start_target, "</td>")
-    gen_tags[3] = string
+    gen_tags[3] = extract_text_from_link_tag(string)
 
     if dev_debug:
         print(gen_tags)
@@ -247,7 +255,7 @@ def generate_spec_tags(output, gen_tags):
         temp[1] = string[0: pivot1]
 
         pivot2 = string.find(" (featuring ")
-        # If there are not featured artists:
+        # If there are no featured artists:
         if pivot2 == -1:
             temp[0] = string[pivot1 + 1: len(string)]
             temp[2] = gen_tags[0]
@@ -283,6 +291,7 @@ def assign_id3_tags(spec_tags, gen_tags):
             continue
 
         audio_file.tag.title = title
+        audio_file.tag.comments.set(u"")
         audio_file.tag.artist = all_artists
         audio_file.tag.album_artist = artist
         audio_file.tag.album = album
@@ -338,10 +347,11 @@ def main():
     output = extract_garbage(output)
     output = generate_spec_tags(output, gen_tags)
     if dev_debug:
+        print(gen_tags)
         for item in output:
             print(item)
     assign_id3_tags(output, gen_tags)
 
 
-dev_debug = True
+dev_debug = False
 main()
