@@ -356,7 +356,7 @@ def assign_id3_tags(spec_tags, gen_tags):
 
     for spec_tag in spec_tags:
         title = spec_tag[0]
-        number = spec_tag[1]
+        number = int(spec_tag[1])
         all_artists = spec_tag[2]
         # If the file exists, assign id3 tags, else continue
         try:
@@ -370,15 +370,15 @@ def assign_id3_tags(spec_tags, gen_tags):
         audio_file.tag.artist = all_artists
         audio_file.tag.album_artist = artist
         audio_file.tag.album = album
-        audio_file.tag.track_num = int(number)
+        audio_file.tag.track_num = number
         audio_file.tag.genre = genre
         audio_file.tag.publisher = publisher
 
         audio_file.tag.release_date = eyed3.core.Date(year)
         audio_file.tag.orig_release_date = eyed3.core.Date(year)
         audio_file.tag.recording_date = eyed3.core.Date(year)
-        # audio_file.tag.encoding_date = eyed3.core.Date(2015)
-        # audio_file.tag.tagging_date = eyed3.core.Date(2015)
+        # audio_file.tag.encoding_date = eyed3.core.Date(year)
+        # audio_file.tag.tagging_date = eyed3.core.Date(year)
 
         audio_file.tag.save()
 
