@@ -64,31 +64,77 @@ def extract_title_from_link_tag(string, contents):
     start = string.find(start_target)
     end_target = " (" + contents[0] + " song)"
     end = string.find(end_target)
+
+    flag = False
+    if end == -1:
+        flag = True
+        end_target = ">"
+        end = string.find(end_target)
     end_string = string[start + len(start_target): end]
+
+    if flag:
+        true_end_target = "</a>"
+        true_end = string.find(true_end_target)
+        end_string += string[true_end + len(true_end_target): len(string)]
+
     return start_string + end_string
+
+
+# Substitute all the original targets with the new targets.
+def substitute(string, og_target, new_target):
+    start = string.find(og_target)
+    while start != -1:
+        start_string = string[0: start]
+        end_string = string[start + len(og_target): len(string)]
+        string = start_string + new_target + end_string
+        start = string.find(og_target)
+    return string
 
 
 # Extract all the garbage from a given output.
 def extract_garbage(output, contents):
-    extract_tasks = ["</td>", "<td style=\"vertical-align:top\">", "\"", "\n"]
+    extract_tasks = ["</td>", "<td style=\"vertical-align:top\">", "\"", "\n",
+                     "<span style=font-size:85%>", "</span>", "</span"]
+    substitute_tasks = [[" / ", " "], [" : ", " "], ["&amp;", "&"]]
     for i in range(len(output)):
         string = output[i]
         for j in range(len(extract_tasks)):
             string = extract(string, extract_tasks[j])
+        for j in range(len(substitute_tasks)):
+            string = substitute(string, substitute_tasks[j][0], substitute_tasks[j][1])
 
-        string = extract_first_usage_between(string, " <span", "</span>")
+        # string = extract_first_usage_between(string, " <span", "</span>")
         string = extract_title_from_link_tag(string, contents)
         output[i] = string
     return output
 
 
+def extract_artist(string):
+    string = extract(string, " (featuring ")
+    string = extract(string, ")")
+    string = substitute(string, " and ", ";")
+    return string
+
+
 # Generate the [song_name, song_number] pairs.
-def generate_pairs(output):
+def generate_pairs(output, contents):
     result = list()
     for i in range(len(output)):
+        temp = ["Song","Number", "Artists"]
         string = output[i]
-        pivot = string.find(".")
-        result.append([string[pivot + 1: len(string)], string[0: pivot]])
+        pivot1 = string.find(".")
+        temp[1] = string[0: pivot1]
+
+        pivot2 = string.find(" (featuring ")
+        if pivot2 == -1:
+            temp[0] = string[pivot1 + 1: len(string)]
+            temp[2] = contents[0]
+        else:
+            temp[0] = string[pivot1 + 1: pivot2]
+            temp[2] = string[pivot2: len(string)]
+            temp[2] = "Logic;" + extract_artist(temp[2])
+
+        result.append(temp)
     return result
 
 
@@ -100,18 +146,17 @@ def assign_files(output, contents):
     publisher = contents[3]
     debug = contents[4]
 
-    for pair in output:
-        # if debug == "True":
-        #     print(pair)
-        title = pair[0]
-        number = pair[1]
+    for item in output:
+        title = item[0]
+        number = item[1]
+        all_artists = item[2]
         try:
             audiofile = eyed3.load(artist + " - " + title + ".mp3")
         except IOError:
             continue
 
         audiofile.tag.title = title
-        audiofile.tag.artist = artist
+        audiofile.tag.artist = all_artists
         audiofile.tag.album_artist = artist
         audiofile.tag.album = album
         audiofile.tag.track_num = int(number)
@@ -144,8 +189,9 @@ def assign_contents(path):
 
 def main():
     del[sys.argv[0]]
-    # sys.argv.append("https://en.wikipedia.org/wiki/Young_Sinatra:_Welcome_to_Forever")
-    # sys.argv.append("rules.txt")
+    if dev_debug:
+        sys.argv.append("https://en.wikipedia.org/wiki/Young_Sinatra_(mixtape)")
+        sys.argv.append("rules.txt")
     html = urllib.request.urlopen(sys.argv[0]).read()
     contents = assign_contents(sys.argv[1])
 
@@ -159,10 +205,12 @@ def main():
     output = list1 + list2
 
     output = extract_garbage(output, contents)
-    output = generate_pairs(output)
-    # for item in output:
-    #     print(item)
+    output = generate_pairs(output, contents)
+    if dev_debug:
+        for item in output:
+            print(item)
     assign_files(output, contents)
 
 
+dev_debug = False
 main()
