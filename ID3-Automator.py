@@ -61,7 +61,7 @@ def get_all_substrings_between(string, start_target, end_target):
 # -------------------------------------------------- Part: Extraction/Substitution Methods
 
 
-# Extract all cases of a given target from a given string.
+# Extract all cases of a given target (exclusive) from a given string.
 # For example if this method is called on the following string:
 #           string = substring_1 + target + substring_2 + target
 # This method will return substring_1 + substring_2
@@ -73,6 +73,23 @@ def extract(string, target):
         end_string = string[start + len(target): len(string)]
         string = start_string + end_string
         start = string.find(target)
+    return string
+
+
+# Extract in all cases everything between a given start_target (exclusive)
+# to a given end_target (exclusive) from a given string.
+# For example if this method is called on the following string:
+#           string = start_target + substring_1 + end_target target + substring_2
+# This method will return substring_2
+def extract_between(string, start_target, end_target):
+    start = string.find(start_target)
+    while start != -1:
+        start_string = string[0: start]
+        end = string.find(end_target)
+        if end == -1:
+            return string
+        string = start_string + string[end + len(end_target): len(string)]
+        start = string.find(start_target)
     return string
 
 
@@ -164,6 +181,8 @@ def lookup_normalized_genre(genre):
         return "Hip-Hop"
     elif genre == "Conscious hip hop":
         return "Hip-Hop"
+    elif genre == "West Coast hip hop":
+        return "Hip-Hop"
     else:
         return genre
 
@@ -194,15 +213,56 @@ def assign_gen_tags(path):
     return gen_tags
 
 
+# Extract all the garbage from a given filtered string output made in the infer_gen_tags method of this program.
+# NOTE: See Implementation.
+# FIXME: Update is necessary if wikipedia switches it's syntax.
+# FIXME: Add more extract/substitute tasks.
+def infer_gen_tags_extract_garbage(string):
+    extract_tasks = ["\"", "\n"]
+    extract_between_tasks = [["<sup", "</sup>"]]
+    substitute_tasks = [["&amp;", "&"]]
+
+    for i in range(len(extract_tasks)):
+        string = extract(string, extract_tasks[i])
+    for i in range(len(extract_between_tasks)):
+        string = extract_between(string, extract_between_tasks[i][0], extract_between_tasks[i][1])
+    for i in range(len(substitute_tasks)):
+        string = substitute(string, substitute_tasks[i][0], substitute_tasks[i][1])
+
+    return string
+
+
 # Helper method of infer_gen_tags, this method will return the publisher of the album
 # at the given wikipedia link specified by the user.
 def infer_gen_tags_publisher(html):
     start_target = "title=\"Record label\">Label</a></th>\n<td class=\"hlist\">"
     string = get_substrings_between(html, start_target, "</td>")
     try:
-        return extract_text_from_link_tag(get_substrings_between(string, "<li>", "</li>"))
+        string = extract_text_from_link_tag(get_substrings_between(string, "<li>", "</li>"))
     except LookupError:
-        return extract_text_from_link_tag(string)
+        string = extract_text_from_link_tag(string)
+        try:
+            string = string[0] + get_substrings_between(string, string[0], ", ")
+        except LookupError:
+            string = string
+    return string
+
+
+# Helper method of infer_gen_tags, this method will return the genre of the album
+# at the given wikipedia link specified by the user
+def infer_gen_tags_genre(html):
+    start_target = "<th scope=\"row\"><a href=\"/wiki/Music_genre\" title=\"Music genre\">Genre</a></th>\n" + \
+                   "<td class=\"category hlist\">"
+    string = get_substrings_between(html, start_target, "</td>")
+    try:
+        string = extract_text_from_link_tag(get_substrings_between(string, "<li>", "</li>"))
+    except LookupError:
+        string = extract_text_from_link_tag(string)
+        try:
+            string = string[0] + get_substrings_between(string, string[0], ", ")
+        except LookupError:
+            string = string
+    return string
 
 
 # Infer the general (for the entire album) tags by using the html document
@@ -218,17 +278,16 @@ def infer_gen_tags(html):
     gen_tags[1] = get_substrings_between(html, "<p><i><b>", "</b></i>")
 
     # Get the album genre.
-    start_target = "<th scope=\"row\"><a href=\"/wiki/Music_genre\" title=\"Music genre\">Genre</a></th>\n" + \
-                   "<td class=\"category hlist\">"
     try:
-        string = get_substrings_between(html, start_target, "</td>")
-        string = extract_text_from_link_tag(string)
-        gen_tags[2] = lookup_normalized_genre(string)
+        gen_tags[2] = lookup_normalized_genre(infer_gen_tags_extract_garbage(infer_gen_tags_genre(html)))
     except LookupError:
         gen_tags[2] = ""
 
     # Get the album publisher
-    gen_tags[3] = lookup_normalized_publisher(infer_gen_tags_publisher(html))
+    try:
+        gen_tags[3] = lookup_normalized_publisher(infer_gen_tags_extract_garbage(infer_gen_tags_publisher(html)))
+    except LookupError:
+        gen_tags[3] = ""
 
     # Get the album year
     start_target = "<td style=\"width: 33%; text-align: center; vertical-align: top; padding: .2em .1em\">"
@@ -301,6 +360,7 @@ def assign_id3_tags(spec_tags, gen_tags):
         all_artists = spec_tag[2]
         # If the file exists, assign id3 tags, else continue
         try:
+            # print(artist + " - " + title + ".mp3")
             audio_file = eyed3.load(artist + " - " + title + ".mp3")
         except IOError:
             continue
@@ -341,7 +401,7 @@ def main():
     del[sys.argv[0]]
 
     if dev_mode:
-        sys.argv.append("https://en.wikipedia.org/wiki/Young_Sinatra:_Welcome_to_Forever")
+        sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
         # sys.argv.append("rules.txt")
 
     # Get and decode the html file located at the given wikipedia page
@@ -375,5 +435,5 @@ def main():
     assign_id3_tags(output, gen_tags)
 
 
-dev_mode = False
+dev_mode = True
 main()
