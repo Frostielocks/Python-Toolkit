@@ -1,0 +1,2 @@
+"Python to C\compile.bat" Uses the latest .py version.
+"C to Exe (Windows)\Compile.bat" Uses the c version in it's own directory.

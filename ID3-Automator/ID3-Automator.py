@@ -391,6 +391,7 @@ def assign_id3_tags(spec_tags, gen_tags):
             print(audio_file.tag.track_num)
             print(audio_file.tag.genre)
             print(audio_file.tag.publisher)
+    return
 
 # -------------------------------------------------- Part: Main Method and global variables.
 
@@ -433,7 +434,7 @@ def main():
         for item in output:
             print(item)
     assign_id3_tags(output, gen_tags)
-
+    return
 
 dev_mode = True
 main()

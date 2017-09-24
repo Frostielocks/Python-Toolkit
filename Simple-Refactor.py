@@ -12,6 +12,7 @@ def refactor(contents, old, new):
             line = line[0: index] + new + line[index + len(old): len(line)]
             start += index + len(old)
         contents[count] = line
+    return
 
 
 def handler(path, old, new):
@@ -25,6 +26,7 @@ def handler(path, old, new):
     contents = "".join(contents)
     file.write(contents)
     file.close()
+    return
 
 
 def extract_from_file(path):
@@ -44,6 +46,7 @@ def print_exit(files, old, new):
     print("Replaced all instances of %s to %s in file(s):" % (old, new))
     for path in files:
         print(path)
+    return
 
 
 def main():
@@ -61,6 +64,7 @@ def main():
     for path in result[0]:
         handler(path, result[1], result[2])
     print_exit(result[0], result[1], result[2])
+    return
 
 
 main()

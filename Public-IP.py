@@ -12,6 +12,7 @@ def get_substring_between(string, start_target, end_target):
 def write_to_file(filepath, ip_addres):
     file = open(filepath, 'a+')
     file.write("Date: %s  -   IP: %s\n" % (time.strftime("%d/%m/%Y"), ip_addres))
+    return
 
 
 def main():
@@ -22,6 +23,7 @@ def main():
     print("Public IP adress is: %s" % ip_adress)
     if len(sys.argv) == 1:
         write_to_file(sys.argv[0], ip_adress)
+    return
 
 
 main()
