@@ -8738,7 +8738,7 @@ static PyObject *__pyx_pf_12ID3Automator_34main(CYTHON_UNUSED PyObject *__pyx_se
  * 
  *     if dev_mode:             # <<<<<<<<<<<<<<
  *         sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
- *         # sys.argv.append("rules.txt")
+ *         # sys.argv.append("test_rules.txt")
  */
   __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_dev_mode); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 404, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
@@ -8750,7 +8750,7 @@ static PyObject *__pyx_pf_12ID3Automator_34main(CYTHON_UNUSED PyObject *__pyx_se
  * 
  *     if dev_mode:
  *         sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")             # <<<<<<<<<<<<<<
- *         # sys.argv.append("rules.txt")
+ *         # sys.argv.append("test_rules.txt")
  * 
  */
     __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_sys); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 405, __pyx_L1_error)
@@ -8766,7 +8766,7 @@ static PyObject *__pyx_pf_12ID3Automator_34main(CYTHON_UNUSED PyObject *__pyx_se
  * 
  *     if dev_mode:             # <<<<<<<<<<<<<<
  *         sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
- *         # sys.argv.append("rules.txt")
+ *         # sys.argv.append("test_rules.txt")
  */
   }
 
@@ -9481,7 +9481,7 @@ static PyObject *__pyx_pf_12ID3Automator_34main(CYTHON_UNUSED PyObject *__pyx_se
  *     assign_id3_tags(output, gen_tags)
  *     return             # <<<<<<<<<<<<<<
  * 
- * dev_mode = True
+ * 
  */
   __Pyx_XDECREF(__pyx_r);
   __pyx_r = Py_None; __Pyx_INCREF(Py_None);
@@ -10336,20 +10336,20 @@ PyMODINIT_FUNC PyInit_ID3Automator(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_main_2, __pyx_t_1) < 0) __PYX_ERR(0, 401, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ID3Automator.py":439
- *     return
- * 
- * dev_mode = True             # <<<<<<<<<<<<<<
- * main()
- */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dev_mode, Py_True) < 0) __PYX_ERR(0, 439, __pyx_L1_error)
-
   /* "ID3Automator.py":440
  * 
- * dev_mode = True
+ * 
+ * dev_mode = False             # <<<<<<<<<<<<<<
+ * main()
+ */
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_dev_mode, Py_False) < 0) __PYX_ERR(0, 440, __pyx_L1_error)
+
+  /* "ID3Automator.py":441
+ * 
+ * dev_mode = False
  * main()             # <<<<<<<<<<<<<<
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_main_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 440, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_main_2); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 441, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_2))) {
@@ -10362,10 +10362,10 @@ PyMODINIT_FUNC PyInit_ID3Automator(void)
     }
   }
   if (__pyx_t_3) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 440, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_2, __pyx_t_3); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 441, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   } else {
-    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 440, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallNoArg(__pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 441, __pyx_L1_error)
   }
   __Pyx_GOTREF(__pyx_t_1);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;

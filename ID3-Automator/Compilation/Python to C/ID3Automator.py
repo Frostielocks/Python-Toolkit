@@ -165,7 +165,7 @@ def extract_garbage(output):
         # Substitute all the extract tasks
         for j in range(len(substitute_tasks)):
             string = substitute(string, substitute_tasks[j][0], substitute_tasks[j][1])
-        
+
         # Update output
         output[i] = string
     return output
@@ -308,7 +308,7 @@ def generate_spec_tags_features(string):
     target = " (featuring "
     if string.find(target) == -1:
         return string
-        
+
     string = extract(string, target)
     string = extract(string, ")")
     string = substitute(string, " and ", ";")
@@ -403,7 +403,7 @@ def main():
 
     if dev_mode:
         sys.argv.append("https://en.wikipedia.org/wiki/Under_Pressure_(album)")
-        # sys.argv.append("rules.txt")
+        # sys.argv.append("test_rules.txt")
 
     # Get and decode the html file located at the given wikipedia page
     html = urllib.request.urlopen(sys.argv[0]).read()
@@ -436,5 +436,6 @@ def main():
     assign_id3_tags(output, gen_tags)
     return
 
-dev_mode = True
+
+dev_mode = False
 main()
