@@ -419,12 +419,13 @@ def main():
     color1 = "<tr style=\"background-color:#fff\">\n"
     color2 = "<tr style=\"background-color:#f7f7f7\">\n"
     start_garbage = "<td style=\"padding-right:10px;text-align:right;vertical-align:top\">"
-    end_target = "<td style=\"vertical-align:top\">"
+    end_target = "</td>\n"
 
     # Combine the raw outputs of the two colors.
     list1 = get_all_substrings_between(html, color1 + start_garbage, end_target)
     list2 = get_all_substrings_between(html, color2 + start_garbage, end_target)
     output = list1 + list2
+    # print(output)
 
     # Transform and Assign the raw output.
     output = extract_garbage(output)
