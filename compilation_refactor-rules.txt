@@ -1,3 +1,0 @@
-<structmember.h>
-"structmember.h"
-ID3-Automator\Compilation\Python to C\ID3Automator.c
