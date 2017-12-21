@@ -1,3 +1,5 @@
+import sys
+
 def wordcount(file):
     infile = open(file, "r")
     count = 0
@@ -11,5 +13,4 @@ def wordcount(file):
     print(count, "Amount of Words")
 
 
-filename = input("Enter filename: ")
-wordcount(filename)
+wordcount(sys.argv[1])
