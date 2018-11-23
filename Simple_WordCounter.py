@@ -1,5 +1,6 @@
 import sys
 
+
 def wordcount(file):
     infile = open(file, "r")
     count = 0
