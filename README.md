@@ -3,17 +3,17 @@ Repository consisting of various simple utilities written in python that I made 
 
 ## Overview
 1. Simple_PublicIP.py
-  * A program that gets the current ip.
+    * A program that gets the current ip.
   
 2. Invoice.py
-  * A program containing an Invoice class that can be used
-  to generate invoices in an easy to view ouput.
-  Optionally also takes a command line argument to specify
-  a json file to be used as input.
+    * A program containing an Invoice class that can be used
+    to generate invoices in an easy to view ouput.
+    Optionally also takes a command line argument to specify
+    a json file to be used as input.
   
 3. Simple_Refactor.py
-  * A refactoring tool that finds and replaces text in multiple files
-  defined by refactor rules in a given file.
+    * A refactoring tool that finds and replaces text in multiple files
+    defined by refactor rules in a given file.
   
 4. Simple_WordCounter.py
-  * A program that counts all the words in a file.
+    * A program that counts all the words in a file.
