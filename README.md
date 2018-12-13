@@ -4,7 +4,7 @@ Repository consisting of various simple utilities written in python that I made 
 ## Overview
 1. Simple_PublicIP.py
     * A program that gets the current ip.
-2. Invoice.py
+2. Simple_Invoice.py
     * A program containing an Invoice class that can be used
     to generate invoices in an easy to view ouput.
     Optionally also takes a command line argument to specify
