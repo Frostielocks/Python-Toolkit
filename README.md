@@ -14,3 +14,5 @@ Repository consisting of various simple utilities written in python that I made 
     defined by refactor rules in a given file.
 4. Simple_WordCounter.py
     * A program that counts all the words in a file.
+5. Simple_CO2.pyi
+    * A program that gets the daily global CO2.
